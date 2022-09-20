@@ -62,11 +62,11 @@ def main():
     # set output dir
     cfg.work_dir = 'output'
 
-    cfg.classes = ('target', 'non_target')
+    classes = ('target', 'non_target')
 
-    cfg.data.train.classes = cfg.classes
-    cfg.data.test.classes = cfg.classes
-    cfg.data.val.classes = cfg.classes
+    cfg.data.train.classes = classes
+    cfg.data.test.classes = classes
+    cfg.data.val.classes = classes
 
     cfg.dump('original_cfg.py')
     from mmdet.datasets import build_dataset
@@ -80,7 +80,7 @@ def main():
 
     # Build the detector
     model = build_detector(cfg.model)
-    #model.CLASSES = datasets[0].CLASSES
+    model.CLASSES = datasets[0].CLASSES
 
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
     train_detector(model, datasets, cfg, validate=True)
