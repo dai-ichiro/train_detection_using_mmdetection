@@ -1,7 +1,6 @@
 import os
 import glob
 from argparse import ArgumentParser
-from re import X
 import xml.etree.ElementTree as ET
 from mim.commands.download import download
 from mmcv import Config
