@@ -17,7 +17,7 @@ def main():
 
     model = init_detector(config, checkpoint, device = 'cuda')
     result = inference_detector(model, img_path)
-    show_result_pyplot(model, img_path, result, score_thr = threshhold)
+    show_result_pyplot(model, img_path, result, palette='random', score_thr=threshhold)
 
 if __name__ == '__main__':
     main()
