@@ -43,7 +43,7 @@ def main():
     os.makedirs('models', exist_ok=True)
 
     #checkpoint_name = model_name
-    checkpoin_name = 'faster_rcnn_r50_fpn_1x_coco'
+    checkpoint_name = 'faster_rcnn_r50_fpn_1x_coco'
     config_fname = checkpoint_name + '.py'
 
     checkpoint = download(package="mmdet", configs=[checkpoint_name], dest_root="models")[0]
