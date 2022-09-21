@@ -101,10 +101,10 @@ def main():
     # save new config
     cfg.dump('finetune_cfg.py')
     
-    # Build dataset
+    # build dataset
     datasets = [build_dataset(cfg.data.train)]
 
-    # Build the detector
+    # build the detector
     model = build_detector(cfg.model)
     model.CLASSES = category_list
 
