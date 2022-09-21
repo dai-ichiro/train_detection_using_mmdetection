@@ -12,14 +12,12 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='VOC dataset')
     parser.add_argument('--batch', type=int, default=1, help='batch for train')
-    #parser.add_argument('--model', type=str, default='faster_rcnn_r50_fpn_1x_coco', help='model name')
     parser.add_argument('--lr', type=float, default=0.0025, help='initial learning rate')
     parser.add_argument('--seed', type=int, default=0, help="seed")
     args = parser.parse_args()
 
     voc_datasets = args.data
     train_batch = args.batch
-    #model_name = args.model
     learning_rate = args.lr
     seed = args.seed
 
@@ -47,7 +45,6 @@ def main():
     config_fname = checkpoint_name + '.py'
 
     checkpoint = download(package="mmdet", configs=[checkpoint_name], dest_root="models")[0]
-    # checkpoint = faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth
 
     cfg = Config.fromfile(os.path.join('models', config_fname))
 
@@ -57,9 +54,7 @@ def main():
 
     cfg.data.train.type = 'VOCDataset'
     cfg.data.train.data_root = './'
-    #cfg.data.train.ann_file = 'VOC2012/ImageSets/Main/train.txt'
     cfg.data.train.ann_file = os.path.join(voc_datasets, 'ImageSets/Main/train.txt')
-    #cfg.data.train.img_prefix = 'VOC2012/'
     cfg.data.train.img_prefix = voc_datasets
 
     cfg.data.test.type = 'VOCDataset'

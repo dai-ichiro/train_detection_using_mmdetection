@@ -44,7 +44,6 @@ def main():
     config_fname = checkpoint_name + '.py'
 
     checkpoint = download(package="mmdet", configs=[checkpoint_name], dest_root="models")[0]
-    # checkpoint = faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth
 
     cfg = Config.fromfile(os.path.join('models', config_fname))
 
