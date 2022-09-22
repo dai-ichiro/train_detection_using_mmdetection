@@ -20,7 +20,6 @@ def parse_opt():
 def main(opt):
     voc_dataset = opt.data
     train_epochs = opt.epochs
-    learning_rate = opt.lr
     seed = opt.seed
     
     voc_dataset_dir, voc_dataset_name = os.path.split(voc_dataset)
@@ -83,7 +82,8 @@ def main(opt):
     #checkpoint_name = model_name
     checkpoint_name = 'yolox_s_8x8_300e_coco'
     config_fname = checkpoint_name + '.py'
-    checkpoint = 'yolox_s_8x8_300e_coco_20211121_095711-4592a793.pth'
+    
+    checkpoint = download(package="mmdet", configs=[checkpoint_name], dest_root="models")[0]
 
     cfg = Config.fromfile(os.path.join('models', config_fname))
 
@@ -91,6 +91,9 @@ def main(opt):
     ## modify configuration file
     ####
 
+    # evaluation metric
+    cfg.evaluation.metric = 'mAP'
+    
     # train_dataset
     cfg.train_dataset.dataset.type = 'VOCDataset'
     cfg.train_dataset.dataset.data_root = voc_dataset_dir
@@ -120,12 +123,8 @@ def main(opt):
     # checkpoint path
     cfg.load_from = os.path.join('models', checkpoint)
 
-    # learning rate (default: 0.02)
-    if learning_rate is not None:
-        cfg.optimizer.lr = learning_rate
-    else:
-        cfg.optimizer.lr = cfg.optimizer.lr / 8
-        cfg.lr_config.min_lr_ratio = cfg.lr_config.min_lr_ratio / 8
+    # learning rate 
+    cfg.auto_scale_lr.enable = True
 
     # modify cuda setting
     cfg.gpu_ids = range(1)
@@ -146,13 +145,9 @@ def main(opt):
     cfg.data.test.classes = category_list
     cfg.data.val.classes = category_list
 
-    cfg.data.samples_per_gpu = 2
-    cfg.data.workers_per_gpu = 1
-
     # save new config
     cfg.dump('finetune_cfg.py')
 
-    
     # build dataset
     datasets = [build_dataset(cfg.data.train)]
 
