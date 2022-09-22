@@ -24,7 +24,6 @@ def main(opt):
     seed = opt.seed
     
     voc_dataset_dir, voc_dataset_name = os.path.split(voc_dataset)
-    voc_dataset_dir = voc_dataset_dir if (voc_dataset_dir is not None) else './'
 
     category_list = set()
     all_xml = glob.glob(os.path.join(voc_dataset, 'Annotations', '*.xml'))
