@@ -13,7 +13,6 @@ def parse_opt():
     parser = ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='path to VOC dataset')
     parser.add_argument('--epochs', type=int, default=3, help='total train epochs')
-    parser.add_argument('--lr', type=float, help='learning rate')
     parser.add_argument('--seed', type=int, default=0, help="seed")
     return parser.parse_args()
 
@@ -93,7 +92,13 @@ def main(opt):
 
     # evaluation metric
     cfg.evaluation.metric = 'mAP'
+
+    # learning rate 
+    cfg.auto_scale_lr.enable = True
     
+    # (optional)
+    cfg.checkpoint_config.interval = 5
+
     # train_dataset
     cfg.train_dataset.dataset.type = 'VOCDataset'
     cfg.train_dataset.dataset.data_root = voc_dataset_dir
@@ -122,9 +127,6 @@ def main(opt):
 
     # checkpoint path
     cfg.load_from = os.path.join('models', checkpoint)
-
-    # learning rate 
-    cfg.auto_scale_lr.enable = True
 
     # modify cuda setting
     cfg.gpu_ids = range(1)
