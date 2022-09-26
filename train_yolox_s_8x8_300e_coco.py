@@ -77,7 +77,9 @@ def main(opt):
     print(f'annotation file for train: {ann_file_train}')
     print(f'annotation file for val: {ann_file_val}')
     print(f'annotation file for test: {ann_file_test}')
-
+    
+    os.makedirs('models', exist_ok=True)
+    
     #checkpoint_name = model_name
     checkpoint_name = 'yolox_s_8x8_300e_coco'
     config_fname = checkpoint_name + '.py'
