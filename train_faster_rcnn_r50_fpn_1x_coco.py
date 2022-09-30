@@ -148,9 +148,6 @@ def main(opt):
     # set output dir
     cfg.work_dir = 'output'
     os.makedirs(cfg.work_dir, exist_ok=True)
-
-    # save new config
-    cfg.dump('finetune_cfg.py')
     
     # build the runner from config
     if 'runner_type' not in cfg:
