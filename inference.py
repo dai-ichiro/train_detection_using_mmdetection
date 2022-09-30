@@ -1,7 +1,11 @@
 from argparse import ArgumentParser
-from mmdet.apis import inference_detector, init_detector, show_result_pyplot
+from mmdet.apis import inference_detector, init_detector
+import mmcv
 
 def main():
+    from mmdet.utils import register_all_modules
+    register_all_modules()
+    
     parser = ArgumentParser()
     parser.add_argument('--image', type=str, required=True, help='test image path')
     parser.add_argument('--config', type = str, required=True, help = 'config file')
@@ -17,7 +21,20 @@ def main():
 
     model = init_detector(config, checkpoint, device = 'cuda')
     result = inference_detector(model, img_path)
-    show_result_pyplot(model, img_path, result, palette='random', score_thr=threshhold)
+    
+    from mmdet.registry import VISUALIZERS
+    visualizer = VISUALIZERS.build(model.cfg.visualizer)
+    visualizer.dataset_meta = model.dataset_meta
+
+    img = mmcv.imread(img_path)
+    img = mmcv.imconvert(img, 'bgr', 'rgb')
+    visualizer.add_datasample(
+            'result',
+            img,
+            data_sample=result,
+            draw_gt=False,
+            show=True,
+            pred_score_thr=threshhold)
 
 if __name__ == '__main__':
     main()
