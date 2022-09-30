@@ -3,11 +3,13 @@ import sys
 import glob
 from argparse import ArgumentParser
 import xml.etree.ElementTree as ET
+
 from mim.commands.download import download
-from mmcv import Config
-from mmdet.datasets import build_dataset
-from mmdet.models import build_detector
-from mmdet.apis import train_detector
+from mmengine.config import Config
+from mmengine.registry import RUNNERS
+from mmengine.runner import Runner
+
+from mmdet.utils import register_all_modules
 
 def parse_opt():
     parser = ArgumentParser()
@@ -18,6 +20,8 @@ def parse_opt():
     return parser.parse_args()
 
 def main(opt):
+    register_all_modules(init_default_scope=False)
+
     voc_dataset = opt.data
     train_epochs = opt.epochs
     learning_rate = opt.lr
@@ -83,7 +87,7 @@ def main(opt):
     os.makedirs('models', exist_ok=True)
 
     #checkpoint_name = model_name
-    checkpoint_name = 'faster_rcnn_r50_fpn_1x_coco'
+    checkpoint_name = 'faster-rcnn_r50_fpn_1x_coco'
     config_fname = checkpoint_name + '.py'
 
     checkpoint = download(package="mmdet", configs=[checkpoint_name], dest_root="models")[0]
@@ -94,22 +98,21 @@ def main(opt):
     ## modify configuration file
     ####
 
-    cfg.data.train.type = 'VOCDataset'
-    cfg.data.test.type = 'VOCDataset'
-    cfg.data.val.type = 'VOCDataset'
+    cfg.train_dataloader.dataset.type = 'VOCDataset'
+    cfg.val_dataloader.dataset.type = 'VOCDataset'
+    cfg.test_dataloader.dataset.type = 'VOCDataset'
 
-    cfg.data.train.data_root = voc_dataset_dir
-    cfg.data.test.data_root = voc_dataset_dir
-    cfg.data.val.data_root = voc_dataset_dir
+    cfg.train_dataloader.dataset.data_root = voc_dataset_dir
+    cfg.val_dataloader.dataset.data_root = voc_dataset_dir
+    cfg.test_dataloader.dataset.data_root = voc_dataset_dir
 
+    cfg.train_dataloader.dataset.ann_file = ann_file_train
+    cfg.val_dataloader.dataset.ann_file = ann_file_val
+    cfg.test_dataloader.dataset.ann_file = ann_file_test
 
-    cfg.data.train.ann_file = ann_file_train
-    cfg.data.test.ann_file = ann_file_test
-    cfg.data.val.ann_file = ann_file_val
-
-    cfg.data.train.img_prefix = voc_dataset_name
-    cfg.data.test.img_prefix = voc_dataset_name
-    cfg.data.val.img_prefix = voc_dataset_name
+    cfg.train_dataloader.dataset.data_prefix = dict(img=voc_dataset_name, sub_data_root=voc_dataset_name)
+    cfg.val_dataloader.dataset.data_prefix = dict(img=voc_dataset_name, sub_data_root=voc_dataset_name)
+    cfg.test_dataloader.dataset.data_prefix = dict(img=voc_dataset_name, sub_data_root=voc_dataset_name)
 
     # number of classes (default: 80)
     cfg.model.roi_head.bbox_head.num_classes = len(category_list) 
@@ -119,12 +122,25 @@ def main(opt):
 
     # learning rate (default: 0.02)
     if learning_rate is not None:
-        cfg.optimizer.lr = learning_rate
+        cfg.optim_wrapper.optimizer.lr = learning_rate
     else:
-        cfg.optimizer.lr = cfg.optimizer.lr / 8
+        cfg.optim_wrapper.optimizer.lr = cfg.optim_wrapper.optimizer.lr / 8
  
-    # evaluation metric
-    cfg.evaluation.metric = 'mAP'
+    # modify evaluator
+    cfg.val_evaluator = dict(
+        type = 'VOCMetric',
+        metric = 'mAP'
+    ) 
+    cfg.test_evaluator = dict(
+        type = 'VOCMetric',
+        metric = 'mAP'
+    )
+
+    
+    #cfg.val_evaluator.ann_file = ann_file_val
+    #fg.test_evaluator.type = 'VOCMetric'
+    #cfg.test_evaluator.ann_file = ann_file_test
+    #cfg.evaluation.metric = 'mAP'
 
     # modify cuda setting
     cfg.gpu_ids = range(1)
@@ -134,29 +150,36 @@ def main(opt):
     cfg.seed = seed
 
     # set epochs (#default: 12)
-    cfg.runner.max_epochs = train_epochs 
+    cfg.train_cfg.max_epochs = train_epochs 
 
     # set output dir
     cfg.work_dir = 'output'
     os.makedirs(cfg.work_dir, exist_ok=True)
 
     # set class names
-    cfg.data.train.classes = category_list
-    cfg.data.test.classes = category_list
-    cfg.data.val.classes = category_list
+    #cfg.data.train.classes = category_list
+    #cfg.data.test.classes = category_list
+    #cfg.data.val.classes = category_list
 
+    metainfo = {'CLASSES': category_list}
+    cfg.train_dataloader.dataset.metainfo = metainfo
+    cfg.val_dataloader.dataset.metainfo = metainfo
+    cfg.test_dataloader.dataset.metainfo = metainfo
+    
     # save new config
     cfg.dump('finetune_cfg.py')
     
-    # build dataset
-    datasets = [build_dataset(cfg.data.train)]
-
-    # build the detector
-    model = build_detector(cfg.model)
-    model.CLASSES = category_list
+    # build the runner from config
+    if 'runner_type' not in cfg:
+        # build the default runner
+        runner = Runner.from_cfg(cfg)
+    else:
+        # build customized runner from the registry
+        # if 'runner_type' is set in the cfg
+        runner = RUNNERS.build(cfg)
 
     # train
-    train_detector(model, datasets, cfg, validate=True)
+    runner.train()
     
 if __name__ == '__main__':
     opt = parse_opt()
