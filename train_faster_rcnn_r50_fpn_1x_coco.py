@@ -117,6 +117,11 @@ def main(opt):
     # number of classes (default: 80)
     cfg.model.roi_head.bbox_head.num_classes = len(category_list) 
 
+    # set class names
+    cfg.train_dataloader.dataset.metainfo = {'CLASSES': category_list}
+    cfg.val_dataloader.dataset.metainfo = {'CLASSES': category_list}
+    cfg.test_dataloader.dataset.metainfo = {'CLASSES': category_list}
+
     # checkpoint path
     cfg.load_from = os.path.join('models', checkpoint)
 
@@ -127,20 +132,8 @@ def main(opt):
         cfg.optim_wrapper.optimizer.lr = cfg.optim_wrapper.optimizer.lr / 8
  
     # modify evaluator
-    cfg.val_evaluator = dict(
-        type = 'VOCMetric',
-        metric = 'mAP'
-    ) 
-    cfg.test_evaluator = dict(
-        type = 'VOCMetric',
-        metric = 'mAP'
-    )
-
-    
-    #cfg.val_evaluator.ann_file = ann_file_val
-    #fg.test_evaluator.type = 'VOCMetric'
-    #cfg.test_evaluator.ann_file = ann_file_test
-    #cfg.evaluation.metric = 'mAP'
+    cfg.val_evaluator = dict(type = 'VOCMetric', metric = 'mAP') 
+    cfg.test_evaluator = dict(type = 'VOCMetric', metric = 'mAP')
 
     # modify cuda setting
     cfg.gpu_ids = range(1)
@@ -156,16 +149,6 @@ def main(opt):
     cfg.work_dir = 'output'
     os.makedirs(cfg.work_dir, exist_ok=True)
 
-    # set class names
-    #cfg.data.train.classes = category_list
-    #cfg.data.test.classes = category_list
-    #cfg.data.val.classes = category_list
-
-    metainfo = {'CLASSES': category_list}
-    cfg.train_dataloader.dataset.metainfo = metainfo
-    cfg.val_dataloader.dataset.metainfo = metainfo
-    cfg.test_dataloader.dataset.metainfo = metainfo
-    
     # save new config
     cfg.dump('finetune_cfg.py')
     
